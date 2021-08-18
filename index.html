@@ -20,7 +20,8 @@
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const canvasCtx = canvasElement.getContext('2d');
-
+var videoWidth = 1640
+var videoHeight = 1480
 
 function calculate_angle(a,b,c){
     var radians = Math.atan2(c.y-b.y, c.x-b.x) - Math.atan2(a.y-b.y, a.x-b.x);
@@ -53,6 +54,10 @@ function precise(x) {
 
 function onResults(results) {
     canvasCtx.save();
+
+    canvasElement.width = videoWidth;
+    canvasElement.height = videoHeight;    
+    
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasCtx.drawImage(
         results.image, 0, 0, canvasElement.width, canvasElement.height);
@@ -90,8 +95,13 @@ const camera = new Camera(videoElement, {
 
     canvasCtx.fillText(videoElement.videoWidth, 10, 80);    
     canvasCtx.fillText(videoElement.videoHeight, 10, 120); 
-    canvasElement.style.widht = videoElement.videoWidth;
-    canvasElement.style.height = videoElement.videoHeight;
+
+    videoWidth = videoElement.videoWidth;
+    videoHeight= videoElement.videoHeight;
+/*
+    canvasElement.height = videoElement.videoHeight;
+    */
+    //console.log(canvasElement.height)
   },
   //width: videoElement.videoWidth,
   //height: videoElement.videoHeight
