@@ -87,6 +87,10 @@ pose.onResults(onResults);
 const camera = new Camera(videoElement, {
   onFrame: async () => {
     await pose.send({image: videoElement});
+    console.log(videoElement.videoWidth)
+    console.log(videoElement.videoHeight )
+    canvasCtx.fillText(videoElement.videoWidth, 10, 80);    
+    canvasCtx.fillText(videoElement.videoHeight, 10, 120);    
   },
   width: 640,
   height: 360
