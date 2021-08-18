@@ -5,7 +5,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -51,42 +51,43 @@ function find_angle(input_array, point_1, point_2, point_3)
 
 
 function onResults(results) {
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    canvasCtx.drawImage(
-        results.image, 0, 0, canvasElement.width, canvasElement.height);
-    drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
-                    {color: '#00FF00', lineWidth: 4});
-    drawLandmarks(canvasCtx, results.poseLandmarks,
-                {color: '#FF0000', lineWidth: 2});
-    canvasCtx.restore();
+  canvasCtx.save();
+  canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+  canvasCtx.drawImage(
+      results.image, 0, 0, canvasElement.width, canvasElement.height);
+  if (results.multiHandLandmarks) {
+    for (const landmarks of results.multiHandLandmarks) {
+      drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+                     {color: '#00FF00', lineWidth: 5});
+      drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 2});
+    }
+  }
 
+  /*
+  var angle = find_angle(results.poseLandmarks, 14, 12, 11)
 
+    canvasCtx.font = "30px Arial";
+    canvasCtx.fillText("Angle"+angle, 10, 50);        
+    console.log(angle)
 
-
-      var angle = find_angle(results.poseLandmarks, 14, 12, 11)
-
-      canvasCtx.font = "30px Arial";
-      canvasCtx.fillText("Angle"+angle, 10, 50);        
-      console.log(angle)
-
-
+  */
+  canvasCtx.restore();
 }
 
-const pose = new Pose({locateFile: (file) => {
-  return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+
+const hands = new Hands({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
 }});
-pose.setOptions({
-  modelComplexity: 1,
-  smoothLandmarks: true,
+hands.setOptions({
+  maxNumHands: 2,
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5
 });
-pose.onResults(onResults);
+hands.onResults(onResults);
 
 const camera = new Camera(videoElement, {
   onFrame: async () => {
-    await pose.send({image: videoElement});
+    await hands.send({image: videoElement});
   },
   width: 1280,
   height: 720
