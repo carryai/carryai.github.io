@@ -54,10 +54,8 @@ function precise(x) {
 
 function onResults(results) {
     canvasCtx.save();
-
     canvasElement.width = videoWidth;
     canvasElement.height = videoHeight;    
-    
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasCtx.drawImage(
         results.image, 0, 0, canvasElement.width, canvasElement.height);
@@ -92,19 +90,11 @@ pose.onResults(onResults);
 const camera = new Camera(videoElement, {
   onFrame: async () => {
     await pose.send({image: videoElement});
-
-    canvasCtx.fillText(videoElement.videoWidth, 10, 80);    
-    canvasCtx.fillText(videoElement.videoHeight, 10, 120); 
-
     videoWidth = videoElement.videoWidth;
-    videoHeight= videoElement.videoHeight;
-/*
-    canvasElement.height = videoElement.videoHeight;
-    */
-    //console.log(canvasElement.height)
+    videoHeight = videoElement.videoHeight;
   },
-  //width: videoElement.videoWidth,
-  //height: videoElement.videoHeight
+  //width: 640,
+  //height: 360
 });
 
 canvasCtx.font = "30px Arial";
