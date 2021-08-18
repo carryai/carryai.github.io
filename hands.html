@@ -9,9 +9,9 @@
 </head>
 
 <body>
-  <div class="container">`
-    <video class="input_video" style="width: 640px; height: 360px"></video>
+  <div class="container">
     <canvas class="output_canvas" width="640px" height="360px"></canvas>
+    <video class="input_video" style="width: 640px; height: 360px"></video>    
   </div>
 </body>
 </html>
@@ -25,30 +25,31 @@ const canvasCtx = canvasElement.getContext('2d');
 function calculate_angle(a,b,c){
     var radians = Math.atan2(c.y-b.y, c.x-b.x) - Math.atan2(a.y-b.y, a.x-b.x);
     var angle = (radians*180/Math.PI);
-    
+   
+    /*
     if (angle > 180) 
         angle = 360-angle;
-    return angle;
+        */
+    return Math.abs(angle);
 }
 
 function find_angle(input_array, point_1, point_2, point_3)
 {
 
-  if ( typeof (input_array) == undefined )
+  if ( typeof (input_array) == 'undefined' )
     return 0;
 
-    if ( typeof (input_array[point_1]) == undefined || typeof (input_array[point_2]) == undefined || typeof (input_array[point_3]) == undefined )
-        
-        return 0;
+  if ( typeof (input_array[point_1]) == 'undefined' || typeof (input_array[point_2]) == 'undefined' || typeof (input_array[point_3]) == 'undefined' )
+      
+      return 0;
 
-    console.log(input_array[point_1]);
-    console.log(input_array[point_2]);
-    console.log(input_array[point_3]);
-
-    var angle = calculate_angle(input_array[point_1],input_array[point_2], input_array[point_3] )
-    return angle
+  var angle = calculate_angle(input_array[point_1],input_array[point_2], input_array[point_3] )
+  return angle
 }
 
+function precise(x) {
+  return Number.parseFloat(x).toFixed(2);
+}
 
 function onResults(results) {
   canvasCtx.save();
@@ -92,5 +93,7 @@ const camera = new Camera(videoElement, {
   width: 640,
   height: 360
 });
+canvasCtx.font = "30px Arial";
+canvasCtx.fillText("Please allow camera permission, Loading..." , 10, 50);    
 camera.start();
 </script>
