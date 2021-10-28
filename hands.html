@@ -10,7 +10,8 @@
 
 <body>
   <div class="container">
-    <canvas class="output_canvas" width="640px" height="480px"></canvas>
+    <canvas class="output_canvas" width="640" height="480"></canvas>
+    <img src="" id="target_img" width="300" />
     <video class="input_video" style="width: 640px; height: 480px"></video>    
   </div>
 </body>
@@ -20,32 +21,106 @@
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const canvasCtx = canvasElement.getContext('2d');
-var videoWidth = 1640
-var videoHeight = 1480
+var videoWidth = 640
+var videoHeight = 480
+
+
+var pictures = [
+    
+    'file:///Users/yukipoon/Downloads/%E7%9B%B8%E7%89%8723-8-2021%E4%B8%8B%E5%8D%885.03.jpeg',
+    'https://images.indianexpress.com/2019/10/hands_759.jpg', 
+    'https://media.istockphoto.com/photos/hands-concept-gesturing-picture-id817552958?k=6&m=817552958&s=170667a&w=0&h=KSR86jI2BAXmxhsW4XTsWx3L2PIfiI5TDxjHUSlXDMc='
+
+  ];
+
+
+var hands_required_angles = [
+
+    [
+        [ 
+            [20, 19, 18], //landmark points
+            140 //required angle
+        ],
+
+        [ 
+            [19, 18, 17], //landmark points
+            90 //required angle
+        ],
+
+        [ 
+            [18, 17, 0], //landmark points
+            100 //required angle
+        ]
+    ],
+
+    [ 
+        [
+            [20, 19, 18], //landmark points
+            140 //required angle
+        ],
+
+        [ 
+            [19, 18, 17], //landmark points
+            90 //required angle
+        ],
+
+        [ 
+            [18, 17, 0], //landmark points
+            100 //required angle
+        ]
+    ],
+    
+    [ 
+        [
+            [20, 19, 18], //landmark points
+            140 //required angle
+        ],
+
+        [ 
+            [19, 18, 17], //landmark points
+            90 //required angle
+        ],
+
+        [ 
+            [18, 17, 0], //landmark points
+            100 //required angle
+        ]
+    ]    
+
+];
+
+var random_index = Math.floor(Math.random()*hands_required_angles.length);
+
 
 function calculate_angle(a,b,c){
     var radians = Math.atan2(c.y-b.y, c.x-b.x) - Math.atan2(a.y-b.y, a.x-b.x);
     var angle = (radians*180/Math.PI);
    
-    /*
+
+    angle=Math.abs(angle)
+    
     if (angle > 180) 
         angle = 360-angle;
-        */
-    return Math.abs(angle);
+        
+    return angle;
 }
 
 function find_angle(input_array, point_1, point_2, point_3)
 {
 
-  if ( typeof (input_array) == 'undefined' )
+  if ( typeof (input_array[0]) == 'undefined' )
     return 0;
 
-  if ( typeof (input_array[point_1]) == 'undefined' || typeof (input_array[point_2]) == 'undefined' || typeof (input_array[point_3]) == 'undefined' )
-      
-      return 0;
+    //console.log(input_array)
+    //console.log(point_1)
+    //console.log(input_array[0])
+    //console.log(input_array[1])
 
-  var angle = calculate_angle(input_array[point_1],input_array[point_2], input_array[point_3] )
-  return angle
+  if ( typeof (input_array[0][point_1]) !== 'undefined' || typeof (input_array[0][point_2]) !== 'undefined' || typeof (input_array[0][point_3]) !== 'undefined' )
+      
+    var angle = calculate_angle(input_array[0][point_1],input_array[0][point_2], input_array[0][point_3] )
+    return angle
+
 }
 
 function precise(x) {
@@ -67,14 +142,41 @@ function onResults(results) {
     }
   }
 
-  /*
-  var angle = find_angle(results.poseLandmarks, 14, 12, 11)
+
+  
+
+  var selected_hands = hands_required_angles[random_index];
+
+  document.getElementById('target_img').src=pictures[random_index];
+
+ 
+  var angle1 = find_angle(results.multiHandLandmarks, selected_hands[0][0][0], selected_hands[0][0][1], selected_hands[0][0][2]);
 
     canvasCtx.font = "30px Arial";
-    canvasCtx.fillText("Angle"+angle, 10, 50);        
-    console.log(angle)
+    canvasCtx.fillText("Angle"+angle1, 10, 50);        
+    console.log(angle1)
 
-  */
+  var angle2 = find_angle(results.multiHandLandmarks, selected_hands[1][0][0], selected_hands[1][0][1], selected_hands[1][0][2]);
+
+    canvasCtx.font = "30px Arial";
+    canvasCtx.fillText("Angle"+angle2, 10, 80);        
+    console.log(angle2)
+
+  var angle3 = find_angle(results.multiHandLandmarks, selected_hands[2][0][0], selected_hands[2][0][1], selected_hands[2][0][2]);
+
+    canvasCtx.font = "30px Arial";
+    canvasCtx.fillText("Angle"+angle3, 10, 110);        
+    console.log(angle3)
+
+  //console.log(selected_hands[0][1]);
+
+   if ( angle1 <= selected_hands[0][1] && angle2 <= selected_hands[1][1] && angle3 <= selected_hands[2][1] &&angle1!=0 &&angle2!=0 &&angle3!=0)
+   {
+
+      canvasCtx.font = "100px Arial";
+      canvasCtx.fillText("😁", 10, 220)
+   }
+
   canvasCtx.restore();
 }
 
@@ -83,7 +185,9 @@ const hands = new Hands({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
 }});
 hands.setOptions({
+  selfieMode: true,
   maxNumHands: 1,
+  modelComplexity: 1,
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5
 });
