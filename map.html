@@ -21,10 +21,6 @@
                 <label for="destination">Destination</label>
                 <input type="text" class="form-control" id="destination" placeholder="Destination">
             </div>
-            <div class="form-group">
-                <label for="timeRemaining">Time Remaining</label>
-                <input type="text" class="form-control" id="timeRemaining" placeholder="Time Remaining">
-            </div>
             <div class="d-flex justify-content-between mt-4">
                 <button type="button" class="btn btn-primary" id="getLocation">Get GPS Location</button>
                 <button type="button" class="btn btn-secondary" id="voiceInput">Voice Input</button>
@@ -35,131 +31,157 @@
         <div id="checkpoints" class="mt-5"></div>
     </div>
 
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
-<script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@googlemaps/js-api-loader@1.12.4"></script>
+    <script>
+        let watchID;
+        let checkpoints = [];
+        let currentCheckpointIndex = 0;
 
-let watchID;
-let checkpoints = [
-    { lat: 22.396428, long: 114.109497, description: 'Checkpoint 1' },
-    { lat: 22.396428, long: 114.109497, description: 'Checkpoint 2' },
-    { lat: 22.396428, long: 114.109497, description: 'Checkpoint 3' },
-];
-let currentCheckpointIndex = 0;
-
-document.getElementById('getLocation').addEventListener('click', function() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            document.getElementById('currentLocation').value = `${position.coords.latitude}, ${position.coords.longitude}`;
-        }, function(error) {
-            alert('Error occurred. Error code: ' + error.code);
+        document.getElementById('getLocation').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('currentLocation').value = `${position.coords.latitude}, ${position.coords.longitude}`;
+                }, function(error) {
+                    alert('Error occurred. Error code: ' + error.code);
+                });
+            } else {
+                alert('Geolocation is not supported by this browser.');
+            }
         });
-    } else {
-        alert('Geolocation is not supported by this browser.');
-    }
-});
 
-document.getElementById('voiceInput').addEventListener('click', function() {
-    if (!('webkitSpeechRecognition' in window)) {
-        alert('Web Speech API not supported.');
-        return;
-    }
-    const recognition = new webkitSpeechRecognition();
-    recognition.lang = 'zh-HK';
-    recognition.onresult = function(event) {
-        document.getElementById('destination').value = event.results[0][0].transcript;
-    };
-    recognition.start();
-});
+        document.getElementById('voiceInput').addEventListener('click', function() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Web Speech API not supported.');
+                return;
+            }
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'zh-HK';
+            recognition.onresult = function(event) {
+                document.getElementById('destination').value = event.results[0][0].transcript;
+            };
+            recognition.start();
+        });
 
-document.getElementById('routeNow').addEventListener('click', function() {
-    const currentLocation = document.getElementById('currentLocation').value;
-    const destination = document.getElementById('destination').value;
-    if (!currentLocation || !destination) {
-        alert('Please provide both current location and destination.');
-        return;
-    }
-    // Here, you would call your routing API to get the route and checkpoints
-    // For demonstration, let's assume we have some dummy checkpoints
-    checkpoints = [
-        { lat: 22.396428, long: 114.109497, description: 'Checkpoint 1' },
-        { lat: 22.396428, long: 114.109497, description: 'Checkpoint 2' },
-        { lat: 22.396428, long: 114.109497, description: 'Checkpoint 3' },
-    ];
-    const checkpointsDiv = document.getElementById('checkpoints');
-    checkpointsDiv.innerHTML = '<h3>Checkpoints</h3><ul>' + checkpoints.map(cp => `<li>${cp.description}</li>`).join('') + '</ul>';
-});
+        document.getElementById('routeNow').addEventListener('click', function() {
+            const currentLocation = document.getElementById('currentLocation').value.split(',').map(Number);
+            const destination = document.getElementById('destination').value;
 
-document.getElementById('start').addEventListener('click', function() {
-    if (!navigator.geolocation) {
-        alert('Geolocation is not supported by this browser.');
-        return;
-    }
-    if (watchID) {
-        navigator.geolocation.clearWatch(watchID);
-    }
-    watchID = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, { enableHighAccuracy: true });
-});
+            if (!currentLocation || !destination) {
+                alert('Please provide both current location and destination.');
+                return;
+            }
 
-function handlePositionUpdate(position) {
-    const { latitude, longitude } = position.coords;
-    const currentLocation = { lat: latitude, long: longitude };
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer();
 
-    speak(`You are currently at latitude ${latitude} and longitude ${longitude}`);
+            const map = new google.maps.Map(document.createElement('div'));
+            directionsRenderer.setMap(map);
 
-    const nextCheckpoint = checkpoints[currentCheckpointIndex];
-    if (isNearCheckpoint(currentLocation, nextCheckpoint)) {
-        speak(`You have reached ${nextCheckpoint.description}`);
-        currentCheckpointIndex++;
-        if (currentCheckpointIndex >= checkpoints.length) {
-            speak('You have reached your destination.');
-            navigator.geolocation.clearWatch(watchID);
+            const request = {
+                origin: { lat: currentLocation[0], lng: currentLocation[1] },
+                destination: destination,
+                travelMode: 'TRANSIT',
+                transitOptions: {
+                    modes: ['BUS', 'RAIL', 'TRAM', 'SUBWAY'],
+                },
+                provideRouteAlternatives: false,
+            };
+
+            directionsService.route(request, function(result, status) {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                    checkpoints = result.routes[0]
+                        .legs[0].steps.map(step => ({
+                        lat: step.start_location.lat(),
+                        long: step.start_location.lng(),
+                        description: `${step.travel_mode}: ${step.instructions}`
+                    }));
+
+                    displayCheckpoints(checkpoints);
+                } else {
+                    alert('Directions request failed due to ' + status);
+                }
+            });
+        });
+
+        function displayCheckpoints(checkpoints) {
+            const checkpointsDiv = document.getElementById('checkpoints');
+            checkpointsDiv.innerHTML = '';
+
+            checkpoints.forEach((checkpoint, index) => {
+                const checkpointDiv = document.createElement('div');
+                checkpointDiv.className = 'checkpoint';
+                checkpointDiv.innerHTML = `
+                    <h5>Checkpoint ${index + 1}</h5>
+                    <p>${checkpoint.description}</p>
+                    <p>Location: ${checkpoint.lat}, ${checkpoint.long}</p>
+                `;
+                checkpointsDiv.appendChild(checkpointDiv);
+            });
         }
-    } else if (isDeviating(currentLocation, nextCheckpoint)) {
-        speak('You are deviating from your path. Please return to the route.');
-    }
-}
 
-function handleError(error) {
-    alert('Error occurred. Error code: ' + error.code);
-}
+        document.getElementById('start').addEventListener('click', function() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by this browser.');
+                return;
+            }
 
-function isNearCheckpoint(currentLocation, checkpoint) {
-    const distance = getDistance(currentLocation, checkpoint);
-    return distance < 50; // 50 meters threshold
-}
+            if (checkpoints.length === 0) {
+                alert('No checkpoints available. Please route first.');
+                return;
+            }
 
-function isDeviating(currentLocation, checkpoint) {
-    const distance = getDistance(currentLocation, checkpoint);
-    return distance > 100; // 100 meters threshold for deviation
-}
+            watchID = navigator.geolocation.watchPosition(function(position) {
+                const currentLocation = {
+                    lat: position.coords.latitude,
+                    long: position.coords.longitude
+                };
 
-function getDistance(loc1, loc2) {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = loc1.lat * Math.PI / 180; // φ, λ in radians
-    const φ2 = loc2.lat * Math.PI / 180;
-    const Δφ = (loc2.lat - loc1.lat) * Math.PI / 180;
-    const Δλ = (loc2.long - loc1.long) * Math.PI / 180;
+                const nextCheckpoint = checkpoints[currentCheckpointIndex];
+                const distance = getDistance(currentLocation, nextCheckpoint);
 
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                if (distance < 50) { // within 50 meters
+                    speak(`You have reached ${nextCheckpoint.description}`);
+                    currentCheckpointIndex++;
+                    if (currentCheckpointIndex >= checkpoints.length) {
+                        navigator.geolocation.clearWatch(watchID);
+                        speak('You have reached your final destination.');
+                    }
+                }
+            }, function(error) {
+                alert('Error occurred. Error code: ' + error.code);
+            });
+        });
 
-    const d = R * c; // Distance in meters
-    return d;
-}
+        function getDistance(loc1, loc2) {
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = loc1.lat * Math.PI / 180; // φ, λ in radians
+            const φ2 = loc2.lat * Math.PI / 180;
+            const Δφ = (loc2.lat - loc1.lat) * Math.PI / 180;
+            const Δλ = (loc2.long - loc1.long) * Math.PI / 180;
 
-function speak(text) {
-    if ('speechSynthesis' in window) {
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'en-US';
-        window.speechSynthesis.speak(msg);
-    } else {
-        alert('Speech synthesis not supported in this browser.');
-    }
-}
-</script>
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            const d = R * c; // Distance in meters
+            return d;
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'en-US';
+                window.speechSynthesis.speak(msg);
+            } else {
+                alert('Speech synthesis not supported in this browser.');
+            }
+        }
+    </script>
 </body>
 </html>
