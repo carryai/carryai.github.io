@@ -1,85 +1,91 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Navigation System</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Planner</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>Navigation System</h1>
-        <form>
+    <div class="container mt-5">
+        <h1 class="text-center">Route Planner</h1>
+        <form id="route-form">
             <div class="form-group">
-                <label for="current-location">Current Location:</label>
-                <input type="text" id="current-location" class="form-control" readonly>
+                <label for="currentLocation">Current Location</label>
+                <input type="text" class="form-control" id="currentLocation" placeholder="Current Location" readonly>
             </div>
             <div class="form-group">
-                <label for="destination">Destination:</label>
-                <input type="text" id="destination" class="form-control">
+                <label for="destination">Destination</label>
+                <input type="text" class="form-control" id="destination" placeholder="Destination">
             </div>
             <div class="form-group">
-                <label for="time-remaining">Time Remaining:</label>
-                <input type="text" id="time-remaining" class="form-control" readonly>
+                <label for="timeRemaining">Time Remaining</label>
+                <input type="text" class="form-control" id="timeRemaining" placeholder="Time Remaining">
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-primary" id="getLocation">Get GPS Location</button>
+                <button type="button" class="btn btn-secondary" id="voiceInput">Voice Input</button>
+                <button type="button" class="btn btn-success" id="routeNow">Route Now</button>
+                <button type="button" class="btn btn-danger" id="start">Start</button>
             </div>
         </form>
-        <div class="buttons">
-            <button class="btn btn-primary" id="get-gps-location">Get GPS Location</button>
-            <button class="btn btn-primary" id="voice-input">Voice Input</button>
-            <button class="btn btn-primary" id="route-now">Route Now</button>
-            <button class="btn btn-primary" id="start">Start</button>
-        </div>
-        <div id="route"></div>
-        <div id="alert"></div>
+        <div id="checkpoints" class="mt-5"></div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-    <script>
-        // Get GPS Location button click event
-        $(document).on("click", "#get-gps-location", function() {
-            // TO DO: Get the current location using the Geolocation API
-            // Update the current location input field
-            $("#current-location").val("Current Location: 123 Main St, Anytown, USA");
-        });
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
+<script>
+document.getElementById('getLocation').addEventListener('click', function() {
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        document.getElementById('currentLocation').value = position.coords.latitude + ', ' + position.coords.longitude;
+    }, function(error) {
+        alert('Error occurred. Error code: ' + error.code);
+    });
+} else {
+    alert('Geolocation is not supported by this browser.');
+}
+});
 
-        // Voice Input button click event
-        $(document).on("click", "#voice-input", function() {
-            // TO DO: Use the Web Speech API to get the destination from the user
-            // Update the destination input field
-            $("#destination").val("Destination: 456 Elm St, Anytown, USA");
-        });
+document.getElementById('voiceInput').addEventListener('click', function() {
+if (!('webkitSpeechRecognition' in window)) {
+    alert('Web Speech API not supported.');
+    return;
+}
+const recognition = new webkitSpeechRecognition();
+recognition.lang = 'zh-HK';
+recognition.onresult = function(event) {
+    document.getElementById('destination').value = event.results[0][0].transcript;
+};
+recognition.start();
+});
 
-        // Route Now button click event
-        $(document).on("click", "#route-now", function() {
-            // TO DO: Use a mapping API to get the route from the current location to the destination
-            // Update the route display
-            $("#route").html("Route: ...");
-        });
+document.getElementById('routeNow').addEventListener('click', function() {
+const currentLocation = document.getElementById('currentLocation').value;
+const destination = document.getElementById('destination').value;
+if (!currentLocation || !destination) {
+    alert('Please provide both current location and destination.');
+    return;
+}
+// Here, you would call your routing API to get the route and checkpoints
+// For demonstration, let's assume we have some dummy checkpoints
+const checkpoints = [
+    'Checkpoint 1: Lat, Long',
+    'Checkpoint 2: Lat, Long',
+    'Checkpoint 3: Lat, Long',
+];
+const checkpointsDiv = document.getElementById('checkpoints');
+checkpointsDiv.innerHTML = '<h3>Checkpoints</h3><ul>' + checkpoints.map(cp => `<li>${cp}</li>`).join('') + '</ul>';
+});
 
-        // Start button click event
-        $(document).on("click", "#start", function() {
-            // TO DO: Start the navigation system
-            // Update the time remaining input field
-            $("#time-remaining").val("Time Remaining: 30 minutes");
-        });
-
-        // Set up the navigation system
-        $(document).on("click", "#start", function() {
-            // TO DO: Set up the navigation system
-            // Update the navigation system state
-        });
-
-        // Check if the user has deviated from the path
-        $(document).on("interval", 1000, function() {
-            // TO DO: Check if the user has deviated from the path
-            // If the user has deviated, make an alert sound and update the alert display
-            $("#alert").html("Alert: You have deviated from the path! Please return to the route.");
-        });
-    </script>
+document.getElementById('start').addEventListener('click', function() {
+if (!navigator.geolocation) {
+    alert('Geolocation is not supported by this browser.');
+    return;
+}
+const checkpoints = [
+    { lat: 0, long: 0,
+</script>
 </body>
 </html>
