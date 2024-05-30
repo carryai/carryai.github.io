@@ -1,1 +1,85 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Navigation System</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Navigation System</h1>
+        <form>
+            <div class="form-group">
+                <label for="current-location">Current Location:</label>
+                <input type="text" id="current-location" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="destination">Destination:</label>
+                <input type="text" id="destination" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="time-remaining">Time Remaining:</label>
+                <input type="text" id="time-remaining" class="form-control" readonly>
+            </div>
+        </form>
+        <div class="buttons">
+            <button class="btn btn-primary" id="get-gps-location">Get GPS Location</button>
+            <button class="btn btn-primary" id="voice-input">Voice Input</button>
+            <button class="btn btn-primary" id="route-now">Route Now</button>
+            <button class="btn btn-primary" id="start">Start</button>
+        </div>
+        <div id="route"></div>
+        <div id="alert"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script>
+        // Get GPS Location button click event
+        $(document).on("click", "#get-gps-location", function() {
+            // TO DO: Get the current location using the Geolocation API
+            // Update the current location input field
+            $("#current-location").val("Current Location: 123 Main St, Anytown, USA");
+        });
+
+        // Voice Input button click event
+        $(document).on("click", "#voice-input", function() {
+            // TO DO: Use the Web Speech API to get the destination from the user
+            // Update the destination input field
+            $("#destination").val("Destination: 456 Elm St, Anytown, USA");
+        });
+
+        // Route Now button click event
+        $(document).on("click", "#route-now", function() {
+            // TO DO: Use a mapping API to get the route from the current location to the destination
+            // Update the route display
+            $("#route").html("Route: ...");
+        });
+
+        // Start button click event
+        $(document).on("click", "#start", function() {
+            // TO DO: Start the navigation system
+            // Update the time remaining input field
+            $("#time-remaining").val("Time Remaining: 30 minutes");
+        });
+
+        // Set up the navigation system
+        $(document).on("click", "#start", function() {
+            // TO DO: Set up the navigation system
+            // Update the navigation system state
+        });
+
+        // Check if the user has deviated from the path
+        $(document).on("interval", 1000, function() {
+            // TO DO: Check if the user has deviated from the path
+            // If the user has deviated, make an alert sound and update the alert display
+            $("#alert").html("Alert: You have deviated from the path! Please return to the route.");
+        });
+    </script>
+</body>
+</html>
