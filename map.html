@@ -36,56 +36,127 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
 <script>
+
+let watchID;
+let checkpoints = [
+    { lat: 22.396428, long: 114.109497, description: 'Checkpoint 1' },
+    { lat: 22.396428, long: 114.109497, description: 'Checkpoint 2' },
+    { lat: 22.396428, long: 114.109497, description: 'Checkpoint 3' },
+];
+let currentCheckpointIndex = 0;
+
 document.getElementById('getLocation').addEventListener('click', function() {
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(position) {
-        document.getElementById('currentLocation').value = position.coords.latitude + ', ' + position.coords.longitude;
-    }, function(error) {
-        alert('Error occurred. Error code: ' + error.code);
-    });
-} else {
-    alert('Geolocation is not supported by this browser.');
-}
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            document.getElementById('currentLocation').value = `${position.coords.latitude}, ${position.coords.longitude}`;
+        }, function(error) {
+            alert('Error occurred. Error code: ' + error.code);
+        });
+    } else {
+        alert('Geolocation is not supported by this browser.');
+    }
 });
 
 document.getElementById('voiceInput').addEventListener('click', function() {
-if (!('webkitSpeechRecognition' in window)) {
-    alert('Web Speech API not supported.');
-    return;
-}
-const recognition = new webkitSpeechRecognition();
-recognition.lang = 'zh-HK';
-recognition.onresult = function(event) {
-    document.getElementById('destination').value = event.results[0][0].transcript;
-};
-recognition.start();
+    if (!('webkitSpeechRecognition' in window)) {
+        alert('Web Speech API not supported.');
+        return;
+    }
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'zh-HK';
+    recognition.onresult = function(event) {
+        document.getElementById('destination').value = event.results[0][0].transcript;
+    };
+    recognition.start();
 });
 
 document.getElementById('routeNow').addEventListener('click', function() {
-const currentLocation = document.getElementById('currentLocation').value;
-const destination = document.getElementById('destination').value;
-if (!currentLocation || !destination) {
-    alert('Please provide both current location and destination.');
-    return;
-}
-// Here, you would call your routing API to get the route and checkpoints
-// For demonstration, let's assume we have some dummy checkpoints
-const checkpoints = [
-    'Checkpoint 1: Lat, Long',
-    'Checkpoint 2: Lat, Long',
-    'Checkpoint 3: Lat, Long',
-];
-const checkpointsDiv = document.getElementById('checkpoints');
-checkpointsDiv.innerHTML = '<h3>Checkpoints</h3><ul>' + checkpoints.map(cp => `<li>${cp}</li>`).join('') + '</ul>';
+    const currentLocation = document.getElementById('currentLocation').value;
+    const destination = document.getElementById('destination').value;
+    if (!currentLocation || !destination) {
+        alert('Please provide both current location and destination.');
+        return;
+    }
+    // Here, you would call your routing API to get the route and checkpoints
+    // For demonstration, let's assume we have some dummy checkpoints
+    checkpoints = [
+        { lat: 22.396428, long: 114.109497, description: 'Checkpoint 1' },
+        { lat: 22.396428, long: 114.109497, description: 'Checkpoint 2' },
+        { lat: 22.396428, long: 114.109497, description: 'Checkpoint 3' },
+    ];
+    const checkpointsDiv = document.getElementById('checkpoints');
+    checkpointsDiv.innerHTML = '<h3>Checkpoints</h3><ul>' + checkpoints.map(cp => `<li>${cp.description}</li>`).join('') + '</ul>';
 });
 
 document.getElementById('start').addEventListener('click', function() {
-if (!navigator.geolocation) {
-    alert('Geolocation is not supported by this browser.');
-    return;
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by this browser.');
+        return;
+    }
+    if (watchID) {
+        navigator.geolocation.clearWatch(watchID);
+    }
+    watchID = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, { enableHighAccuracy: true });
+});
+
+function handlePositionUpdate(position) {
+    const { latitude, longitude } = position.coords;
+    const currentLocation = { lat: latitude, long: longitude };
+
+    speak(`You are currently at latitude ${latitude} and longitude ${longitude}`);
+
+    const nextCheckpoint = checkpoints[currentCheckpointIndex];
+    if (isNearCheckpoint(currentLocation, nextCheckpoint)) {
+        speak(`You have reached ${nextCheckpoint.description}`);
+        currentCheckpointIndex++;
+        if (currentCheckpointIndex >= checkpoints.length) {
+            speak('You have reached your destination.');
+            navigator.geolocation.clearWatch(watchID);
+        }
+    } else if (isDeviating(currentLocation, nextCheckpoint)) {
+        speak('You are deviating from your path. Please return to the route.');
+    }
 }
-const checkpoints = [
-    { lat: 0, long: 0,
+
+function handleError(error) {
+    alert('Error occurred. Error code: ' + error.code);
+}
+
+function isNearCheckpoint(currentLocation, checkpoint) {
+    const distance = getDistance(currentLocation, checkpoint);
+    return distance < 50; // 50 meters threshold
+}
+
+function isDeviating(currentLocation, checkpoint) {
+    const distance = getDistance(currentLocation, checkpoint);
+    return distance > 100; // 100 meters threshold for deviation
+}
+
+function getDistance(loc1, loc2) {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = loc1.lat * Math.PI / 180; // φ, λ in radians
+    const φ2 = loc2.lat * Math.PI / 180;
+    const Δφ = (loc2.lat - loc1.lat) * Math.PI / 180;
+    const Δλ = (loc2.long - loc1.long) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const d = R * c; // Distance in meters
+    return d;
+}
+
+function speak(text) {
+    if ('speechSynthesis' in window) {
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        window.speechSynthesis.speak(msg);
+    } else {
+        alert('Speech synthesis not supported in this browser.');
+    }
+}
 </script>
 </body>
 </html>
