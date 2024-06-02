@@ -90,6 +90,11 @@
                     const transcript = event.results[0][0].transcript;
                     document.getElementById('destination').value = transcript;
                 };
+
+                recognition.onerror = function(event) {
+                    console.error(event.error);
+                };
+
             } else if ('webkitSpeechRecognition' in window) {
                 const recognition = new webkitSpeechRecognition();
                 recognition.lang = 'yue-Hant-HK'; // Cantonese language code
@@ -99,6 +104,10 @@
                     const transcript = event.results[0][0].transcript;
                     document.getElementById('destination').value = transcript;
                 };
+
+                recognition.onerror = function(event) {
+                    console.error(event.error);
+                };                
             } else {
                 alert("此瀏覽器不支持語音輸入。");
             }
