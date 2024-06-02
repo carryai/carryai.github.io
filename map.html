@@ -279,7 +279,9 @@
 
         function loadVoices() {
             const voices = window.speechSynthesis.getVoices();
-            cantoneseVoice = voices.find(voice => voice.lang === 'zh-HK' || voice.lang === 'zh-Hant-HK');
+            cantoneseVoice = voices.find(voice => voice.lang === 'zh-HK' || voice.lang === 'zh-Hant-HK' || voice.lang === 'zh-yue');
+
+            console.log(voices);
         }
 
         window.speechSynthesis.onvoiceschanged = loadVoices;
